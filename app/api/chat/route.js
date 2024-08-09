@@ -35,7 +35,11 @@ Tone: Friendly, supportive, professional
 Style: Clear, concise, informative` 
 
 export async function POST(req){
-    const openai = new OpenAI()
+    const openai = new OpenAI({
+        baseURL: "https://openrouter.ai/api/v1",
+        apiKey: process.env.OPENROUTER_API_KEY,
+    })
+
     const data = await req.json()
 
     const completion = await openai.chat.completions.create({
@@ -46,7 +50,7 @@ export async function POST(req){
             },
             ...data,
         ],
-        model:'gpt-4o-mini',
+        model:"meta-llama/llama-3-8b-instruct:free",
         stream:true,
     })
 

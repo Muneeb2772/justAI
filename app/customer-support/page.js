@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { AppBar, Box, Button, Container, createTheme, CssBaseline, IconButton, Menu, MenuItem, styled, ThemeProvider, Toolbar, Typography } from '@mui/material'
+import { AppBar, Box, Button, Container, createTheme, CssBaseline, IconButton, Menu, MenuItem, Stack, styled, TextField, ThemeProvider, Toolbar, Typography } from '@mui/material'
 import SmartToyIcon from '@mui/icons-material/SmartToy';
 import React, { useEffect, useState } from 'react'
 import { onAuthStateChanged, signOut } from 'firebase/auth';
@@ -13,48 +13,18 @@ const theme = createTheme({
         primary: {
           main: '#121212',
           contrastText: '#ffffff',
+          
         },
         secondary: {
           main: '#e5e7eb', // Light grey
         },
+        background:{
+          default:'#171717'
+        },
         error: {
           main: '#dc2626',
         },
-      },
-      components: {
-        MuiButton: {
-          styleOverrides: {
-            root: {
-              borderRadius: '4px',
-              transition: 'background-color 0.3s, color 0.3s',
-              '&:hover': {
-                backgroundColor: '#333333',
-                color: '#ffffff',
-              },
-              '&:active': {
-                backgroundColor: '#555555',
-                color: '#ffffff',
-              },
-            },
-          },
-        },
-        MuiCard: {
-          styleOverrides: {
-            root: {
-              borderRadius: '8px',
-              boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
-            },
-          },
-        },
-        MuiTextField: {
-          styleOverrides: {
-            root: {
-              borderRadius: '4px',
-            },
-          },
-        },
-      },
-    });
+      },});
 
 
 const Header = styled(Box)(({ theme }) => ({
@@ -97,10 +67,55 @@ const Footer = styled(Box)(({ theme }) => ({
 }));
 
 const CustomerSupport = () => {
-    const [anchorEl, setAnchorEl] = useState(null); // For dropdown menu
-    const [userEmail, setUserEmail] = useState(''); // State to hold user email
-    const [userUid, setUserUid] = useState(''); // State to hold user UID
-    const router = useRouter();
+  const [messages, setMessages] = useState([{
+    role:'assistant',
+    content: `Hi I'm the JustAI Support Agent, How can I help you?`
+  }])
+  const [message, setMessage] = useState('')
+  const [anchorEl, setAnchorEl] = useState(null); // For dropdown menu
+  const [userEmail, setUserEmail] = useState(''); // State to hold user email
+  const [userUid, setUserUid] = useState(''); // State to hold user UID
+  const router = useRouter();
+
+
+  const sendMessage = async () => {
+    setMessage('')  // Clear the input field
+    setMessages((messages) => [
+      ...messages,
+      { role: 'user', content: message },  // Add the user's message to the chat
+      { role: 'assistant', content: '' },  // Add a placeholder for the assistant's response
+    ])
+  
+    // Send the message to the server
+    const response = fetch('/api/chat', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify([...messages, { role: 'user', content: message }]),
+    }).then(async (res) => {
+      const reader = res.body.getReader()  // Get a reader to read the response body
+      const decoder = new TextDecoder()  // Create a decoder to decode the response text
+  
+      let result = ''
+      // Function to process the text from the response
+      return reader.read().then(function processText({ done, value }) {
+        if (done) {
+          return result
+        }
+        const text = decoder.decode(value || new Uint8Array(), { stream: true })  // Decode the text
+        setMessages((messages) => {
+          let lastMessage = messages[messages.length - 1]  // Get the last message (assistant's placeholder)
+          let otherMessages = messages.slice(0, messages.length - 1)  // Get all other messages
+          return [
+            ...otherMessages,
+            { ...lastMessage, content: lastMessage.content + text },  // Append the decoded text to the assistant's message
+          ]
+        })
+        return reader.read().then(processText)  // Continue reading the next chunk of the response
+      })
+    })
+  }
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth,(user) => {
@@ -131,6 +146,7 @@ const CustomerSupport = () => {
     return (
         <ThemeProvider theme = {theme}>
             <Header>
+              <CssBaseline />
                 <HeaderContent maxWidth = '2000'>
                     <a href = '/' style={{display: 'flex', alignItems:'center', color:'inherit', textDecoration:'none'  }}>
                         <SmartToyIcon fontSize = 'medium' />
@@ -156,9 +172,35 @@ const CustomerSupport = () => {
                     </Menu> 
                 </HeaderContent>
             </Header>
-
-
-
+                  <Stack direction="column" spacing = {1} flexGrow ={1} overflow ="auto" minHeight="100%" height ="600px"
+                  p="25px" bgcolor="ghostwhite" border= "1px solid black" width="auto"> 
+                    {
+                      messages.map((message,index) => (
+                        <Box 
+                          key = {index}
+                          display="flex"
+                          flexDirection = "row"
+                          justifyContent= {message.role === 'assistant'?'flex-start':'flex-end'}>
+                          <Box 
+                          bgcolor={message.role === 'assistant'?"#121212":"#111111"}
+                          color="white"
+                          borderRadius={16}
+                          p ={3}> {message.content}</Box>
+                        </Box>
+                      ))
+                    }
+                  </Stack>
+                  <Stack direction="row" spacing = {2} justifyContent="space-between" bgcolor="ghostwhite">
+                    <TextField
+                      label = 'message'
+                      width = "300px"
+                      fullWidth 
+                      value={message} 
+                      onChange={(e) => setMessage(e.target.value)} 
+                      placeholder="Type a message..." />
+                    <Button variant="contained" color="primary" onClick ={sendMessage}>Send</Button>
+                  </Stack>
+                
 
 
         </ThemeProvider>

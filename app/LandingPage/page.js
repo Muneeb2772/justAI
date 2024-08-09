@@ -37,7 +37,7 @@ const LandingPage = () => {
             <AppBar position='static' color = 'primary'>
                 <Toolbar>
                     <Typography variant = 'h6' color = 'inherit'>
-                        justAI 
+                        JustAI 
                     </Typography>
                 </Toolbar>
             </AppBar>
