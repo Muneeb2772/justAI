@@ -3,10 +3,10 @@
 import { useRouter } from 'next/navigation'
 import { AppBar, Box, Button, Container, createTheme, CssBaseline, IconButton, Menu, MenuItem, Stack, styled, TextField, ThemeProvider, Toolbar, Typography } from '@mui/material'
 import SmartToyIcon from '@mui/icons-material/SmartToy';
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth } from '@/firebase';
-import { AccountCircle, AccountCircleOutlined, Logout } from '@mui/icons-material';
+import { AccountCircle, AccountCircleOutlined, BeachAccess, Logout } from '@mui/icons-material';
 
 const theme = createTheme({
     palette: {
@@ -76,46 +76,59 @@ const CustomerSupport = () => {
   const [userEmail, setUserEmail] = useState(''); // State to hold user email
   const [userUid, setUserUid] = useState(''); // State to hold user UID
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false); // State to hold
 
 
   const sendMessage = async () => {
+    if(!message.trim()|| isLoading) return;
+    setIsLoading(true);
     setMessage('')  // Clear the input field
     setMessages((messages) => [
-      ...messages,
-      { role: 'user', content: message },  // Add the user's message to the chat
-      { role: 'assistant', content: '' },  // Add a placeholder for the assistant's response
-    ])
-  
-    // Send the message to the server
-    const response = fetch('/api/chat', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify([...messages, { role: 'user', content: message }]),
-    }).then(async (res) => {
-      const reader = res.body.getReader()  // Get a reader to read the response body
-      const decoder = new TextDecoder()  // Create a decoder to decode the response text
-  
-      let result = ''
-      // Function to process the text from the response
-      return reader.read().then(function processText({ done, value }) {
-        if (done) {
-          return result
-        }
-        const text = decoder.decode(value || new Uint8Array(), { stream: true })  // Decode the text
-        setMessages((messages) => {
-          let lastMessage = messages[messages.length - 1]  // Get the last message (assistant's placeholder)
-          let otherMessages = messages.slice(0, messages.length - 1)  // Get all other messages
-          return [
-            ...otherMessages,
-            { ...lastMessage, content: lastMessage.content + text },  // Append the decoded text to the assistant's message
-          ]
-        })
-        return reader.read().then(processText)  // Continue reading the next chunk of the response
+    ...messages,
+    { role: 'user', content: message },  // Add the user's message to the chat
+    { role: 'assistant', content: '' },  // Add a placeholder for the assistant's response
+  ])
+
+  // Send the message to the server
+  const response = fetch('/api/chat', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify([...messages, { role: 'user', content: message }]),
+  }).then(async (res) => {
+    const reader = res.body.getReader()  // Get a reader to read the response body
+    const decoder = new TextDecoder()  // Create a decoder to decode the response text
+
+    let result = ''
+    // Function to process the text from the response
+    return reader.read().then(function processText({ done, value }) {
+      if (done) {
+        return result
+      }
+      const text = decoder.decode(value || new Uint8Array(), { stream: true })  // Decode the text
+      setMessages((messages) => {
+        let lastMessage = messages[messages.length - 1]  // Get the last message (assistant's placeholder)
+        let otherMessages = messages.slice(0, messages.length - 1)  // Get all other messages
+        return [
+          ...otherMessages,
+          { ...lastMessage, content: lastMessage.content + text },  // Append the decoded text to the assistant's message
+        ]
       })
+      return reader.read().then(processText)
+        // Continue reading the next chunk of the response
     })
-  }
+  })
+  setIsLoading(false)
+}
+
+const handleKeyPress = (event) => {
+  if (event.key === 'Enter' && !event.shiftKey){
+    event.preventDefault()
+    sendMessage()
+}}
+
+
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth,(user) => {
@@ -142,6 +155,15 @@ const CustomerSupport = () => {
     const handleMenuClose =() => {
         setAnchorEl(null);
     };
+
+    const messageEndRef = useRef(null)
+    const scrollToBottom = () => {
+      messageEndRef.current?.scrollIntoView({behavior:'smooth'})
+    }
+
+    useEffect(() => {
+      scrollToBottom()
+    }, [messages])
     
     return (
         <ThemeProvider theme = {theme}>
@@ -172,8 +194,8 @@ const CustomerSupport = () => {
                     </Menu> 
                 </HeaderContent>
             </Header>
-                  <Stack direction="column" spacing = {1} flexGrow ={1} overflow ="auto" minHeight="100%" height ="600px"
-                  p="25px" bgcolor="ghostwhite" border= "1px solid black" width="auto"> 
+                  <Stack direction="column" spacing = {1} flexGrow ={1} overflow='auto' minHeight="100%" height ="600px"
+                  p="25px" bgcolor="ghostwhite" border= "1px solid black" width="auto" > 
                     {
                       messages.map((message,index) => (
                         <Box 
@@ -189,6 +211,7 @@ const CustomerSupport = () => {
                         </Box>
                       ))
                     }
+                    <div ref = {messageEndRef}/>
                   </Stack>
                   <Stack direction="row" spacing = {2} justifyContent="space-between" bgcolor="ghostwhite">
                     <TextField
@@ -197,12 +220,13 @@ const CustomerSupport = () => {
                       fullWidth 
                       value={message} 
                       onChange={(e) => setMessage(e.target.value)} 
-                      placeholder="Type a message..." />
-                    <Button variant="contained" color="primary" onClick ={sendMessage}>Send</Button>
+                      placeholder="Type a message..." 
+                      onKeyPress={handleKeyPress}
+                      disabled = {isLoading}
+                      />
+                    <Button variant="contained" color="primary" onClick ={sendMessage} disabled = {isLoading}>{isLoading?'Sending': 'Send'}
+                    </Button>
                   </Stack>
-                
-
-
         </ThemeProvider>
     )
 }
