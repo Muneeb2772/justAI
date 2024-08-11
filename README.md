@@ -1,37 +1,17 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+This is JustAI, your very own SWE interview helper.
+Visit the site : (https://just-ai.vercel.app/)
+By our team: Muneeb, Avantika, Falah and Sowmya
 
 ## Getting Started
 
-First, run the development server:
+Get ready to level up your interview preparation with Just AI, your personalized mentor powered by Llama 3.1 Free APIs. This revolutionary tool will guide you through every step, from practicing coding challenges to receiving tailored feedback, boosting your confidence, and ultimately securing your dream software engineering role.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## What was learnt
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Routing through pages and OpenRouter API, this was my first time using react and nextJS it helped understand how to make your own backend for the OpenRouter Meta Llama 3.1 free API. It helped me understand how to make our own chatbot.
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
-"# justAI" 
+**Skills that were thought**
+* NextJs
+* API
+* LLMs
+* Routing
